@@ -1,0 +1,138 @@
+// Tabi schema. V0.1: User + World. V0.2: Widget (presentation-only canvas).
+// V0.3: Photo/Note/DiaryEntry/Place as real, independently-addressable Objects.
+// Connections between objects are V0.5 — deliberately not modeled yet.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String   @id @default(cuid())
+  clerkId     String   @unique
+  email       String   @unique
+  username    String   @unique
+  displayName String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  world World?
+
+  photos       Photo[]
+  notes        Note[]
+  diaryEntries DiaryEntry[]
+  places       Place[]
+}
+
+enum Privacy {
+  PRIVATE
+  PUBLIC
+  UNLISTED
+  SHARED
+}
+
+// Real, independently-addressable objects (tabi.app/<username>/photo/<id>, etc).
+// Not yet connected to each other (V0.5) or to Widgets (still presentation-only).
+
+model Photo {
+  id        String    @id @default(cuid())
+  ownerId   String
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  imageUrl  String
+  caption   String?
+  takenAt   DateTime?
+  privacy   Privacy   @default(PRIVATE)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([ownerId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title     String?
+  body      String
+  privacy   Privacy  @default(PRIVATE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+model DiaryEntry {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  body      String
+  privacy   Privacy  @default(PRIVATE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ownerId, date])
+  @@index([ownerId])
+}
+
+// latitude/longitude are captured now (optional) even though nothing renders
+// them yet — V0.4's globe needs real coordinates and backfilling them later
+// across users would be painful.
+model Place {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  slug        String
+  name        String
+  description String?
+  latitude    Float?
+  longitude   Float?
+  privacy     Privacy  @default(PRIVATE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([ownerId, slug])
+  @@index([ownerId])
+}
+
+model World {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  ownerId   String   @unique
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  widgets Widget[]
+}
+
+enum WidgetType {
+  TEXT
+  NOTES
+  PHOTO
+  MAP
+}
+
+// Presentation only — placement + freeform content for V0.2's canvas.
+// Once real Objects (Photo, Note, ...) exist from V0.3 onward, widgets should
+// reference those objects instead of owning content directly.
+model Widget {
+  id        String     @id @default(cuid())
+  worldId   String
+  world     World      @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  type      WidgetType
+  x         Int        @default(0)
+  y         Int        @default(0)
+  width     Int        @default(280)
+  height    Int        @default(200)
+  zIndex    Int        @default(0)
+  content   Json       @default("{}")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([worldId])
+}
