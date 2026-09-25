@@ -27,19 +27,57 @@ export function PlacePicker({
   // ({ ssr: false }), so reading window here on first render is safe.
   const [webglOk] = useState(() => supportsWebGL());
   const [manual, setManual] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [locateError, setLocateError] = useState<string | null>(null);
 
-  if (!webglOk || manual) {
-    return (
-      <div className="flex flex-col gap-2">
-        {webglOk && (
-          <button
-            type="button"
-            onClick={() => setManual(false)}
-            className="self-start text-xs text-accent hover:text-accent-strong"
-          >
-            ← Use the globe instead
-          </button>
-        )}
+  function handleLocateMe() {
+    if (!navigator.geolocation) {
+      setLocateError("Your browser doesn't support location.");
+      return;
+    }
+    setLocating(true);
+    setLocateError(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        onChange(position.coords.latitude, position.coords.longitude);
+        setLocating(false);
+      },
+      (error) => {
+        setLocating(false);
+        setLocateError(
+          error.code === error.PERMISSION_DENIED
+            ? "Location permission denied — pick manually below."
+            : "Couldn't get your location — pick manually below.",
+        );
+      },
+      { enableHighAccuracy: false, timeout: 10_000 },
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <button
+        type="button"
+        onClick={handleLocateMe}
+        disabled={locating}
+        className="flex items-center justify-center gap-2 self-start rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper transition-colors hover:bg-accent-strong disabled:opacity-50"
+      >
+        {locating ? "Finding you…" : "📍 Use my current location"}
+      </button>
+      {locateError && <p className="text-xs text-accent-strong">{locateError}</p>}
+
+      {!manual && webglOk && (
+        <>
+          <p className="text-xs text-ink-muted">or click the globe to drop a pin</p>
+          <div className="relative h-64 w-full overflow-hidden rounded-xl border border-line bg-ink">
+            <Canvas camera={{ position: [0, 0, 4], fov: 40 }} dpr={[1, 1.5]}>
+              <PlacePickerScene picked={value} onPick={(lat, lng) => onChange(lat, lng)} />
+            </Canvas>
+          </div>
+        </>
+      )}
+
+      {(manual || !webglOk) && (
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1 text-sm">
             Latitude
@@ -66,38 +104,17 @@ export function PlacePicker({
             />
           </label>
         </div>
-      </div>
-    );
-  }
+      )}
 
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="relative h-64 w-full overflow-hidden rounded-xl border border-line bg-ink">
-        <Canvas camera={{ position: [0, 0, 4], fov: 40 }} dpr={[1, 1.5]}>
-          <PlacePickerScene
-            picked={value}
-            onPick={(lat, lng) => onChange(lat, lng)}
-          />
-        </Canvas>
-        {!value && (
-          <p className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-paper/70">
-            Click the globe to drop a pin
-          </p>
-        )}
-      </div>
       <div className="flex items-center justify-between text-xs text-ink-muted">
         <span>
-          {value
-            ? `${value.lat.toFixed(2)}°, ${value.lng.toFixed(2)}°`
-            : "No location picked yet"}
+          {value ? `${value.lat.toFixed(2)}°, ${value.lng.toFixed(2)}°` : "No location picked yet"}
         </span>
-        <button
-          type="button"
-          onClick={() => setManual(true)}
-          className="hover:text-ink"
-        >
-          Enter coordinates manually
-        </button>
+        {webglOk && (
+          <button type="button" onClick={() => setManual((m) => !m)} className="hover:text-ink">
+            {manual ? "Use the globe instead" : "Enter coordinates manually"}
+          </button>
+        )}
       </div>
     </div>
   );
