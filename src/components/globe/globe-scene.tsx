@@ -70,7 +70,13 @@ export function GlobeScene({
   const { camera } = useThree();
   const theme = GLOBE_THEMES[themeId];
 
-  const targetVec = useMemo(() => {
+  // latLngToVector3 gives a position in the sphere's LOCAL (unrotated) space.
+  // The rotating group has almost always turned since that point was last at
+  // its "home" orientation (idle spin, or a prior drag), so this must be
+  // converted to world space every frame via the group's current rotation —
+  // using it directly caused the camera to fly toward a stale, wrong-looking
+  // spot instead of where the marker actually is on screen.
+  const localTarget = useMemo(() => {
     if (!selectedPlace) return null;
     return latLngToVector3(selectedPlace.latitude, selectedPlace.longitude, RADIUS);
   }, [selectedPlace]);
@@ -82,13 +88,14 @@ export function GlobeScene({
       groupRef.current.rotation.y += delta * 0.06;
     }
 
-    if (targetVec && controlsRef.current) {
-      const desiredCamPos = targetVec
+    if (localTarget && groupRef.current && controlsRef.current) {
+      const worldTarget = groupRef.current.localToWorld(localTarget.clone());
+      const desiredCamPos = worldTarget
         .clone()
         .normalize()
         .multiplyScalar(RADIUS * 2.1 * theme.cameraDistance);
       camera.position.lerp(desiredCamPos, 0.04);
-      controlsRef.current.target.lerp(targetVec, 0.04);
+      controlsRef.current.target.lerp(worldTarget, 0.04);
       controlsRef.current.update();
     }
   });

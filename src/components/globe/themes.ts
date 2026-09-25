@@ -12,13 +12,6 @@ export type GlobeThemeConfig = {
   showStars: boolean;
   /** Multiplier on the default camera distance — <1 zooms in. */
   cameraDistance: number;
-  /**
-   * Day/night terminator with city lights on the dark side — a real sun
-   * direction relative to the spinning planet. Only makes sense for "planet
-   * floating in space" themes; an indoor table globe or a flat satellite-
-   * photo view should just be evenly, brightly lit instead.
-   */
-  dayNightCycle: boolean;
   /** Multiplies the day texture — a warm tan/orange tint for a physical
    * decorative-globe look instead of a cool photographic satellite tone. */
   sphereTint: string;
@@ -40,7 +33,6 @@ export const GLOBE_THEMES: Record<GlobeThemeId, GlobeThemeConfig> = {
     showMoons: false,
     showStars: true,
     cameraDistance: 1,
-    dayNightCycle: true,
     sphereTint: "#ffffff",
     backgroundCss: SPACE_BG,
   },
@@ -54,7 +46,6 @@ export const GLOBE_THEMES: Record<GlobeThemeId, GlobeThemeConfig> = {
     showMoons: false,
     showStars: false,
     cameraDistance: 1,
-    dayNightCycle: false,
     sphereTint: "#f0c894",
     backgroundCss:
       "radial-gradient(circle at 50% 35%, #4a3423 0%, #2c1f16 55%, #1a120c 100%)",
@@ -69,7 +60,6 @@ export const GLOBE_THEMES: Record<GlobeThemeId, GlobeThemeConfig> = {
     showMoons: true,
     showStars: true,
     cameraDistance: 1.15,
-    dayNightCycle: true,
     sphereTint: "#ffffff",
     backgroundCss: SPACE_BG,
   },
@@ -83,7 +73,6 @@ export const GLOBE_THEMES: Record<GlobeThemeId, GlobeThemeConfig> = {
     showMoons: false,
     showStars: false,
     cameraDistance: 0.7,
-    dayNightCycle: false,
     sphereTint: "#ffffff",
     backgroundCss: SPACE_BG,
   },
