@@ -63,20 +63,14 @@ export default async function WorldPage({
   }));
 
   return (
-    <div className="flex flex-1 flex-col gap-6 py-10">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-1 px-6">
-        <p className="font-display text-sm uppercase tracking-[0.2em] text-accent">
-          tabi.app/{world.slug}
-        </p>
-        <h1 className="font-display text-3xl">
-          {world.owner.displayName ?? world.slug}&apos;s world
-        </h1>
-      </div>
-
+    <div className="flex flex-1 flex-col">
       <GlobeLoader
+        worldId={world.id}
         username={username}
+        displayName={world.owner.displayName ?? world.slug}
         places={globePlaces}
         isOwner={isOwner}
+        initialTheme={world.globeTheme}
         stats={
           objects
             ? {
@@ -88,17 +82,21 @@ export default async function WorldPage({
         }
       />
 
-      <WorldCanvas worldId={world.id} initialWidgets={widgets} isOwner={isOwner} />
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-16">
+        <h2 className="font-display text-2xl">Customize your space</h2>
 
-      {objects && (
-        <ObjectsSection
-          username={username}
-          photos={objects.photos}
-          notes={objects.notes}
-          diaryEntries={objects.diaryEntries}
-          places={objects.places}
-        />
-      )}
+        <WorldCanvas worldId={world.id} initialWidgets={widgets} isOwner={isOwner} />
+
+        {objects && (
+          <ObjectsSection
+            username={username}
+            photos={objects.photos}
+            notes={objects.notes}
+            diaryEntries={objects.diaryEntries}
+            places={objects.places}
+          />
+        )}
+      </div>
     </div>
   );
 }

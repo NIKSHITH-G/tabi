@@ -2,7 +2,20 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
-import type { WidgetType } from "@/generated/prisma/client";
+import type { GlobeTheme, WidgetType } from "@/generated/prisma/client";
+
+export async function updateGlobeTheme(worldId: string, theme: GlobeTheme) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const world = await prisma.world.findUnique({
+    where: { id: worldId },
+    include: { owner: true },
+  });
+  if (!world || world.owner.clerkId !== userId) throw new Error("Forbidden");
+
+  await prisma.world.update({ where: { id: worldId }, data: { globeTheme: theme } });
+}
 
 const DEFAULT_CONTENT: Record<WidgetType, Record<string, string>> = {
   TEXT: { text: "" },

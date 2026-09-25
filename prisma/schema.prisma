@@ -99,13 +99,21 @@ model Place {
   @@index([ownerId])
 }
 
+enum GlobeTheme {
+  CLASSIC
+  TABLE
+  MOONS
+  SATELLITE
+}
+
 model World {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  ownerId   String   @unique
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String     @id @default(cuid())
+  slug       String     @unique
+  ownerId    String     @unique
+  owner      User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  globeTheme GlobeTheme @default(CLASSIC)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
   widgets Widget[]
 }

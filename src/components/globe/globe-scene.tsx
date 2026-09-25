@@ -5,17 +5,20 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { latLngToVector3 } from "@/lib/geo";
-import { GlobeBody, RADIUS, PAPER, ACCENT } from "./globe-body";
+import { GlobeBody, RADIUS, PAPER } from "./globe-body";
+import { GLOBE_THEMES, type GlobeThemeId } from "./themes";
 import type { GlobePlace } from "./tabi-globe";
 
 function MemoryPoint({
   place,
   selected,
   onSelect,
+  color,
 }: {
   place: GlobePlace;
   selected: boolean;
   onSelect: (place: GlobePlace) => void;
+  color: string;
 }) {
   // Sit just outside the graticule/atmosphere shells so it never loses a
   // transparency depth-sort fight with them.
@@ -43,7 +46,7 @@ function MemoryPoint({
       }}
     >
       <sphereGeometry args={[0.045, 16, 16]} />
-      <meshBasicMaterial color={ACCENT} toneMapped={false} />
+      <meshBasicMaterial color={color} toneMapped={false} />
     </mesh>
   );
 }
@@ -53,15 +56,18 @@ export function GlobeScene({
   selectedPlace,
   onSelect,
   reducedMotion,
+  themeId = "CLASSIC",
 }: {
   places: GlobePlace[];
   selectedPlace: GlobePlace | null;
   onSelect: (place: GlobePlace) => void;
   reducedMotion: boolean;
+  themeId?: GlobeThemeId;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const controlsRef = useRef<React.ComponentRef<typeof OrbitControls>>(null);
   const { camera } = useThree();
+  const theme = GLOBE_THEMES[themeId];
 
   const targetVec = useMemo(() => {
     if (!selectedPlace) return null;
@@ -87,13 +93,14 @@ export function GlobeScene({
       <directionalLight position={[3, 2, 4]} intensity={1.1} color={PAPER} />
 
       <group ref={groupRef}>
-        <GlobeBody>
+        <GlobeBody themeId={themeId}>
           {places.map((place) => (
             <MemoryPoint
               key={place.slug}
               place={place}
               selected={selectedPlace?.slug === place.slug}
               onSelect={onSelect}
+              color={theme.accentColor}
             />
           ))}
         </GlobeBody>
