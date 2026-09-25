@@ -67,14 +67,18 @@ export function TabiGlobe({
     });
   }
 
-  const statsLine = stats
-    ? [
-        `${places.length} ${places.length === 1 ? "place" : "places"}`,
-        `${stats.photos} ${stats.photos === 1 ? "photo" : "photos"}`,
-        `${stats.notes} ${stats.notes === 1 ? "note" : "notes"}`,
-        `${stats.diaryEntries} diary`,
-      ].join(" · ")
-    : null;
+  const totalContent = stats
+    ? places.length + stats.photos + stats.notes + stats.diaryEntries
+    : 0;
+  const statsLine =
+    stats && totalContent > 0
+      ? [
+          `${places.length} ${places.length === 1 ? "place" : "places"}`,
+          `${stats.photos} ${stats.photos === 1 ? "photo" : "photos"}`,
+          `${stats.notes} ${stats.notes === 1 ? "note" : "notes"}`,
+          `${stats.diaryEntries} diary`,
+        ].join(" · ")
+      : null;
 
   if (webglOk === false) {
     return (
