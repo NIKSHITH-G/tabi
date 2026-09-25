@@ -19,9 +19,15 @@ export type GlobeThemeConfig = {
    * photo view should just be evenly, brightly lit instead.
    */
   dayNightCycle: boolean;
+  /** Multiplies the day texture — a warm tan/orange tint for a physical
+   * decorative-globe look instead of a cool photographic satellite tone. */
+  sphereTint: string;
+  /** CSS background behind the canvas — dark space, or a warm indoor tone. */
+  backgroundCss: string;
 };
 
 const PAPER = "#faf6ef";
+const SPACE_BG = "#0e0c0a";
 
 export const GLOBE_THEMES: Record<GlobeThemeId, GlobeThemeConfig> = {
   CLASSIC: {
@@ -35,11 +41,13 @@ export const GLOBE_THEMES: Record<GlobeThemeId, GlobeThemeConfig> = {
     showStars: true,
     cameraDistance: 1,
     dayNightCycle: true,
+    sphereTint: "#ffffff",
+    backgroundCss: SPACE_BG,
   },
   TABLE: {
     id: "TABLE",
     label: "Table Globe",
-    accentColor: "#e08148",
+    accentColor: "#c97b3d",
     atmosphereColor: "#e08148",
     atmosphereOpacity: 0,
     showBase: true,
@@ -47,6 +55,9 @@ export const GLOBE_THEMES: Record<GlobeThemeId, GlobeThemeConfig> = {
     showStars: false,
     cameraDistance: 1,
     dayNightCycle: false,
+    sphereTint: "#f0c894",
+    backgroundCss:
+      "radial-gradient(circle at 50% 35%, #4a3423 0%, #2c1f16 55%, #1a120c 100%)",
   },
   MOONS: {
     id: "MOONS",
@@ -59,6 +70,8 @@ export const GLOBE_THEMES: Record<GlobeThemeId, GlobeThemeConfig> = {
     showStars: true,
     cameraDistance: 1.15,
     dayNightCycle: true,
+    sphereTint: "#ffffff",
+    backgroundCss: SPACE_BG,
   },
   SATELLITE: {
     id: "SATELLITE",
@@ -71,6 +84,8 @@ export const GLOBE_THEMES: Record<GlobeThemeId, GlobeThemeConfig> = {
     showStars: false,
     cameraDistance: 0.7,
     dayNightCycle: false,
+    sphereTint: "#ffffff",
+    backgroundCss: SPACE_BG,
   },
 };
 

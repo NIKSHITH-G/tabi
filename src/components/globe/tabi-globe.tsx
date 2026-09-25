@@ -106,7 +106,10 @@ export function TabiGlobe({
   const cameraZ = 4 * GLOBE_THEMES[theme].cameraDistance;
 
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-ink">
+    <div
+      className="relative h-[100dvh] w-full overflow-hidden"
+      style={{ background: GLOBE_THEMES[theme].backgroundCss }}
+    >
       <Canvas camera={{ position: [0, 0, cameraZ], fov: 40 }} dpr={[1, 1.5]}>
         <GlobeScene
           places={places}

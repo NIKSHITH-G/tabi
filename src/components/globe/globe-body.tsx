@@ -99,7 +99,13 @@ function DayNightEarth({ onSurfaceClick }: { onSurfaceClick?: (p: THREE.Vector3)
   );
 }
 
-function FlatLitEarth({ onSurfaceClick }: { onSurfaceClick?: (p: THREE.Vector3) => void }) {
+function FlatLitEarth({
+  onSurfaceClick,
+  tint,
+}: {
+  onSurfaceClick?: (p: THREE.Vector3) => void;
+  tint: string;
+}) {
   const dayMap = useTexture(EARTH_DAY_TEXTURE);
   return (
     <mesh
@@ -113,7 +119,7 @@ function FlatLitEarth({ onSurfaceClick }: { onSurfaceClick?: (p: THREE.Vector3) 
       }
     >
       <sphereGeometry args={[RADIUS, 64, 64]} />
-      <meshStandardMaterial map={dayMap} roughness={0.8} metalness={0} />
+      <meshStandardMaterial map={dayMap} color={tint} roughness={0.8} metalness={0} />
     </mesh>
   );
 }
@@ -158,7 +164,7 @@ export function EarthSphere({
       {theme.dayNightCycle ? (
         <DayNightEarth onSurfaceClick={onSurfaceClick} />
       ) : (
-        <FlatLitEarth onSurfaceClick={onSurfaceClick} />
+        <FlatLitEarth onSurfaceClick={onSurfaceClick} tint={theme.sphereTint} />
       )}
 
       {theme.atmosphereOpacity > 0 && (
@@ -227,18 +233,48 @@ export function Moons() {
   );
 }
 
-// Fixed in world space — a table globe's stand does not spin, only the ball does.
+const WOOD = "#3d2a1a";
+const BRASS = "#c9a24b";
+
+function TripodLeg({ angle }: { angle: number }) {
+  const legLength = RADIUS * 1.9;
+  return (
+    <group rotation={[0, angle, 0]}>
+      <group position={[0, -RADIUS * 0.15, RADIUS * 0.15]} rotation={[Math.PI / 7, 0, 0]}>
+        <mesh position={[0, -legLength / 2, 0]}>
+          <cylinderGeometry args={[0.028, 0.04, legLength, 10]} />
+          <meshStandardMaterial color={WOOD} roughness={0.65} />
+        </mesh>
+        {/* brass foot cap */}
+        <mesh position={[0, -legLength - 0.02, 0]}>
+          <cylinderGeometry args={[0.045, 0.03, 0.06, 10]} />
+          <meshStandardMaterial color={BRASS} roughness={0.3} metalness={0.8} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+// Fixed in world space — a real decorative table globe's meridian ring and
+// tripod stand never spin; only the ball rotates inside them.
 export function TableBase() {
   return (
-    <group position={[0, -RADIUS * 1.05, 0]}>
-      <mesh>
-        <cylinderGeometry args={[RADIUS * 0.55, RADIUS * 0.7, RADIUS * 0.12, 32]} />
-        <meshStandardMaterial color="#2a1c12" roughness={0.7} />
+    <group position={[0, -RADIUS * 0.05, 0]}>
+      {/* Brass meridian ring the sphere sits inside */}
+      <mesh rotation={[0, 0, Math.PI / 2.15]}>
+        <torusGeometry args={[RADIUS * 1.06, 0.028, 16, 64]} />
+        <meshStandardMaterial color={BRASS} roughness={0.25} metalness={0.85} />
       </mesh>
-      <mesh position={[0, RADIUS * 0.35, 0]}>
-        <cylinderGeometry args={[0.04, 0.06, RADIUS * 0.7, 16]} />
-        <meshStandardMaterial color="#4a3524" roughness={0.6} metalness={0.2} />
+
+      {/* Brass horizon ring + arms connecting to the tripod head */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -RADIUS * 0.15, 0]}>
+        <torusGeometry args={[RADIUS * 1.02, 0.02, 12, 64]} />
+        <meshStandardMaterial color={BRASS} roughness={0.25} metalness={0.85} />
       </mesh>
+
+      <TripodLeg angle={0} />
+      <TripodLeg angle={(Math.PI * 2) / 3} />
+      <TripodLeg angle={(Math.PI * 4) / 3} />
     </group>
   );
 }

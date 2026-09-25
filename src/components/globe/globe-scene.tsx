@@ -93,10 +93,12 @@ export function GlobeScene({
     }
   });
 
+  const lightColor = theme.id === "TABLE" ? "#ffd9a8" : PAPER;
+
   return (
     <>
-      <ambientLight intensity={0.7} color={PAPER} />
-      <directionalLight position={[3, 2, 4]} intensity={1.3} color={PAPER} />
+      <ambientLight intensity={theme.id === "TABLE" ? 0.9 : 0.7} color={lightColor} />
+      <directionalLight position={[3, 2, 4]} intensity={1.3} color={lightColor} />
 
       {theme.showStars && <Starfield />}
       {theme.showBase && <TableBase />}
