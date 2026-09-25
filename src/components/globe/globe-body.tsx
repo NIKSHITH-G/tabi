@@ -1,43 +1,58 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import { latLngToVector3 } from "@/lib/geo";
-import { getContinentDots } from "@/lib/continents";
-import { GLOBE_THEMES, PAPER_COLOR, type GlobeThemeConfig } from "./themes";
+import { PAPER_COLOR, type GlobeThemeConfig } from "./themes";
 
 export const RADIUS = 1.6;
-export const INK = "#211d1a";
 export const PAPER = PAPER_COLOR;
 export const ACCENT = "#e08148";
 
-function ContinentDots({ theme }: { theme: GlobeThemeConfig }) {
-  const geometry = useMemo(() => {
-    const dots = getContinentDots();
-    const positions = new Float32Array(dots.length * 3);
-    dots.forEach((d, i) => {
-      const v = latLngToVector3(d.lat, d.lng, RADIUS * 1.001);
-      positions[i * 3] = v.x;
-      positions[i * 3 + 1] = v.y;
-      positions[i * 3 + 2] = v.z;
-    });
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    return geo;
-  }, []);
+const EARTH_DAY_TEXTURE = "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg";
+
+// The real, photographic Earth — goes inside the rotating group so it spins
+// on its axis. Everything decorative (stand, moons, stars) stays outside that
+// group so only the planet itself turns.
+export function EarthSphere({
+  theme,
+  onSurfaceClick,
+}: {
+  theme: GlobeThemeConfig;
+  onSurfaceClick?: (localPoint: THREE.Vector3) => void;
+}) {
+  const dayMap = useTexture(EARTH_DAY_TEXTURE);
 
   return (
-    <points geometry={geometry}>
-      <pointsMaterial
-        color={PAPER}
-        size={0.018}
-        sizeAttenuation
-        transparent
-        opacity={theme.continentOpacity}
-        depthWrite={false}
-      />
-    </points>
+    <>
+      <mesh
+        onClick={
+          onSurfaceClick
+            ? (e) => {
+                e.stopPropagation();
+                onSurfaceClick(e.object.worldToLocal(e.point.clone()));
+              }
+            : undefined
+        }
+      >
+        <sphereGeometry args={[RADIUS, 64, 64]} />
+        <meshStandardMaterial map={dayMap} roughness={0.8} metalness={0} />
+      </mesh>
+
+      {theme.atmosphereOpacity > 0 && (
+        <mesh scale={1.1}>
+          <sphereGeometry args={[RADIUS, 32, 32]} />
+          <meshBasicMaterial
+            color={theme.atmosphereColor}
+            transparent
+            opacity={theme.atmosphereOpacity}
+            side={THREE.BackSide}
+            depthWrite={false}
+          />
+        </mesh>
+      )}
+    </>
   );
 }
 
@@ -57,12 +72,10 @@ const STAR_POSITIONS = (() => {
   return positions;
 })();
 
-function Starfield() {
-  const geometry = useMemo(() => {
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(STAR_POSITIONS, 3));
-    return geo;
-  }, []);
+// Fixed in world space — does not rotate with the Earth.
+export function Starfield() {
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(STAR_POSITIONS, 3));
 
   return (
     <points geometry={geometry}>
@@ -92,7 +105,18 @@ function Moon({ radius, speed, tilt }: { radius: number; speed: number; tilt: nu
   );
 }
 
-function TableBase() {
+// Fixed in world space — orbits are independent of the Earth's own spin.
+export function Moons() {
+  return (
+    <>
+      <Moon radius={RADIUS * 1.8} speed={0.25} tilt={0.3} />
+      <Moon radius={RADIUS * 2.3} speed={-0.15} tilt={-0.5} />
+    </>
+  );
+}
+
+// Fixed in world space — a table globe's stand does not spin, only the ball does.
+export function TableBase() {
   return (
     <group position={[0, -RADIUS * 1.05, 0]}>
       <mesh>
@@ -104,72 +128,5 @@ function TableBase() {
         <meshStandardMaterial color="#4a3524" roughness={0.6} metalness={0.2} />
       </mesh>
     </group>
-  );
-}
-
-function OrbitRing({ color }: { color: string }) {
-  return (
-    <mesh rotation={[Math.PI / 2.4, 0, 0]}>
-      <torusGeometry args={[RADIUS * 1.35, 0.004, 8, 128]} />
-      <meshBasicMaterial color={color} transparent opacity={0.4} />
-    </mesh>
-  );
-}
-
-// Sphere + dotted continents + theme-driven decoration, shared by the
-// memory-point globe and the place-picker globe so both stay visually aligned.
-export function GlobeBody({
-  children,
-  onSurfaceClick,
-  themeId = "CLASSIC",
-}: {
-  children?: React.ReactNode;
-  onSurfaceClick?: (localPoint: THREE.Vector3) => void;
-  themeId?: keyof typeof GLOBE_THEMES;
-}) {
-  const theme = GLOBE_THEMES[themeId];
-
-  return (
-    <>
-      {theme.showStars && <Starfield />}
-
-      <mesh
-        onClick={
-          onSurfaceClick
-            ? (e) => {
-                e.stopPropagation();
-                onSurfaceClick(e.object.worldToLocal(e.point.clone()));
-              }
-            : undefined
-        }
-      >
-        <sphereGeometry args={[RADIUS, 48, 48]} />
-        <meshStandardMaterial color={theme.sphereColor} roughness={0.85} metalness={0.1} />
-      </mesh>
-
-      <ContinentDots theme={theme} />
-
-      <mesh scale={1.12}>
-        <sphereGeometry args={[RADIUS, 32, 32]} />
-        <meshBasicMaterial
-          color={theme.atmosphereColor}
-          transparent
-          opacity={theme.atmosphereOpacity}
-          side={THREE.BackSide}
-          depthWrite={false}
-        />
-      </mesh>
-
-      {theme.showBase && <TableBase />}
-      {theme.showOrbitRing && <OrbitRing color={theme.accentColor} />}
-      {theme.showMoons && (
-        <>
-          <Moon radius={RADIUS * 1.8} speed={0.25} tilt={0.3} />
-          <Moon radius={RADIUS * 2.3} speed={-0.15} tilt={-0.5} />
-        </>
-      )}
-
-      {children}
-    </>
   );
 }

@@ -1,11 +1,15 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { Suspense, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type * as THREE from "three";
 import { latLngToVector3, vector3ToLatLng } from "@/lib/geo";
-import { GlobeBody, RADIUS, PAPER, ACCENT } from "./globe-body";
+import { EarthSphere, RADIUS, PAPER, ACCENT } from "./globe-body";
+import { EarthErrorBoundary } from "./earth-error-boundary";
+import { GLOBE_THEMES } from "./themes";
+
+const PICKER_THEME = GLOBE_THEMES.CLASSIC;
 
 function PickedMarker({ lat, lng }: { lat: number; lng: number }) {
   const position = useMemo(
@@ -44,18 +48,22 @@ export function PlacePickerScene({
 
   return (
     <>
-      <ambientLight intensity={0.6} color={PAPER} />
-      <directionalLight position={[3, 2, 4]} intensity={1.1} color={PAPER} />
+      <ambientLight intensity={0.7} color={PAPER} />
+      <directionalLight position={[3, 2, 4]} intensity={1.3} color={PAPER} />
 
       <group ref={groupRef}>
-        <GlobeBody
-          onSurfaceClick={(localPoint) => {
-            const { lat, lng } = vector3ToLatLng(localPoint);
-            onPick(lat, lng);
-          }}
-        >
-          {picked && <PickedMarker lat={picked.lat} lng={picked.lng} />}
-        </GlobeBody>
+        <EarthErrorBoundary>
+          <Suspense fallback={null}>
+            <EarthSphere
+              theme={PICKER_THEME}
+              onSurfaceClick={(localPoint) => {
+                const { lat, lng } = vector3ToLatLng(localPoint);
+                onPick(lat, lng);
+              }}
+            />
+          </Suspense>
+        </EarthErrorBoundary>
+        {picked && <PickedMarker lat={picked.lat} lng={picked.lng} />}
       </group>
 
       <OrbitControls

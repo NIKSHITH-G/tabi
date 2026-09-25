@@ -3,15 +3,15 @@ export type GlobeThemeId = "CLASSIC" | "TABLE" | "MOONS" | "SATELLITE";
 export type GlobeThemeConfig = {
   id: GlobeThemeId;
   label: string;
-  sphereColor: string;
   accentColor: string;
   atmosphereColor: string;
+  /** 0 disables the glow entirely (flat/indoor looks don't want one). */
   atmosphereOpacity: number;
-  continentOpacity: number;
   showBase: boolean;
   showMoons: boolean;
   showStars: boolean;
-  showOrbitRing: boolean;
+  /** Multiplier on the default camera distance — <1 zooms in. */
+  cameraDistance: number;
 };
 
 const PAPER = "#faf6ef";
@@ -20,54 +20,46 @@ export const GLOBE_THEMES: Record<GlobeThemeId, GlobeThemeConfig> = {
   CLASSIC: {
     id: "CLASSIC",
     label: "Classic",
-    sphereColor: "#211d1a",
     accentColor: "#e08148",
-    atmosphereColor: "#e08148",
-    atmosphereOpacity: 0.06,
-    continentOpacity: 0.35,
+    atmosphereColor: "#7fb3e0",
+    atmosphereOpacity: 0.15,
     showBase: false,
     showMoons: false,
-    showStars: false,
-    showOrbitRing: false,
+    showStars: true,
+    cameraDistance: 1,
   },
   TABLE: {
     id: "TABLE",
     label: "Table Globe",
-    sphereColor: "#3a2a1c",
-    accentColor: "#d99a52",
-    atmosphereColor: "#d99a52",
-    atmosphereOpacity: 0.03,
-    continentOpacity: 0.4,
+    accentColor: "#e08148",
+    atmosphereColor: "#e08148",
+    atmosphereOpacity: 0,
     showBase: true,
     showMoons: false,
     showStars: false,
-    showOrbitRing: false,
+    cameraDistance: 1,
   },
   MOONS: {
     id: "MOONS",
     label: "Moons",
-    sphereColor: "#1a1a22",
     accentColor: "#e08148",
     atmosphereColor: "#8891c9",
-    atmosphereOpacity: 0.08,
-    continentOpacity: 0.35,
+    atmosphereOpacity: 0.18,
     showBase: false,
     showMoons: true,
     showStars: true,
-    showOrbitRing: false,
+    cameraDistance: 1.15,
   },
   SATELLITE: {
     id: "SATELLITE",
     label: "Satellite",
-    sphereColor: "#10181c",
-    accentColor: "#6fd3d9",
-    atmosphereColor: "#6fd3d9",
-    atmosphereOpacity: 0.1,
-    continentOpacity: 0.55,
+    accentColor: "#ffcc4d",
+    atmosphereColor: "#7fb3e0",
+    atmosphereOpacity: 0,
     showBase: false,
     showMoons: false,
-    showStars: true,
-    showOrbitRing: true,
+    showStars: false,
+    cameraDistance: 0.7,
   },
 };
 

@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { Suspense, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { latLngToVector3 } from "@/lib/geo";
-import { GlobeBody, RADIUS, PAPER } from "./globe-body";
+import { EarthSphere, Moons, Starfield, TableBase, RADIUS, PAPER } from "./globe-body";
+import { EarthErrorBoundary } from "./earth-error-boundary";
 import { GLOBE_THEMES, type GlobeThemeId } from "./themes";
 import type { GlobePlace } from "./tabi-globe";
 
@@ -20,8 +21,8 @@ function MemoryPoint({
   onSelect: (place: GlobePlace) => void;
   color: string;
 }) {
-  // Sit just outside the graticule/atmosphere shells so it never loses a
-  // transparency depth-sort fight with them.
+  // Sit just outside the planet surface so it never loses a depth-sort fight
+  // with the atmosphere shell.
   const position = useMemo(
     () => latLngToVector3(place.latitude, place.longitude, RADIUS * 1.03),
     [place.latitude, place.longitude],
@@ -75,12 +76,17 @@ export function GlobeScene({
   }, [selectedPlace]);
 
   useFrame((_, delta) => {
+    // Only the planet itself spins — the group holds just the sphere and its
+    // memory points, never the stand/moons/stars.
     if (groupRef.current && !selectedPlace && !reducedMotion) {
       groupRef.current.rotation.y += delta * 0.06;
     }
 
     if (targetVec && controlsRef.current) {
-      const desiredCamPos = targetVec.clone().normalize().multiplyScalar(RADIUS * 2.1);
+      const desiredCamPos = targetVec
+        .clone()
+        .normalize()
+        .multiplyScalar(RADIUS * 2.1 * theme.cameraDistance);
       camera.position.lerp(desiredCamPos, 0.04);
       controlsRef.current.target.lerp(targetVec, 0.04);
       controlsRef.current.update();
@@ -89,21 +95,28 @@ export function GlobeScene({
 
   return (
     <>
-      <ambientLight intensity={0.6} color={PAPER} />
-      <directionalLight position={[3, 2, 4]} intensity={1.1} color={PAPER} />
+      <ambientLight intensity={0.7} color={PAPER} />
+      <directionalLight position={[3, 2, 4]} intensity={1.3} color={PAPER} />
+
+      {theme.showStars && <Starfield />}
+      {theme.showBase && <TableBase />}
+      {theme.showMoons && <Moons />}
 
       <group ref={groupRef}>
-        <GlobeBody themeId={themeId}>
-          {places.map((place) => (
-            <MemoryPoint
-              key={place.slug}
-              place={place}
-              selected={selectedPlace?.slug === place.slug}
-              onSelect={onSelect}
-              color={theme.accentColor}
-            />
-          ))}
-        </GlobeBody>
+        <EarthErrorBoundary>
+          <Suspense fallback={null}>
+            <EarthSphere theme={theme} />
+          </Suspense>
+        </EarthErrorBoundary>
+        {places.map((place) => (
+          <MemoryPoint
+            key={place.slug}
+            place={place}
+            selected={selectedPlace?.slug === place.slug}
+            onSelect={onSelect}
+            color={theme.accentColor}
+          />
+        ))}
       </group>
 
       <OrbitControls
@@ -111,7 +124,7 @@ export function GlobeScene({
         enablePan={false}
         enableDamping
         dampingFactor={0.08}
-        minDistance={RADIUS * 1.6}
+        minDistance={RADIUS * 1.6 * theme.cameraDistance}
         maxDistance={RADIUS * 4}
       />
     </>
